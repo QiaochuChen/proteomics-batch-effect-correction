@@ -15,7 +15,6 @@ library(RUVIIIC)
 
 
 rm(list = ls())
-setwd('~/Desktop/毕业课题/manuscript-batch/CaseStudy1_Quartet/data/')
 
 
 ## metadata ----------------------------------
