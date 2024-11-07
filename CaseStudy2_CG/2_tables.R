@@ -15,7 +15,7 @@ rm(list = ls())
 
 
 ## input --------------------
-setwd("~/Desktop/毕业课题/manuscript-batch/CaseStudy2_CG/")
+setwd("./CaseStudy2_CG/")
 meta <- read.csv("data/metadata.csv")
 
 ## peptide level
@@ -39,10 +39,10 @@ data_list <- mclapply(pro_files, data.table::fread)
 
 
 ## global ----------------------
-source("~/Desktop/毕业课题/utils/PCA.R")
-source("~/Desktop/毕业课题/utils/DEP.R")
+source("./utils/PCA.R")
+source("./utils/DEP.R")
 
-setwd("~/Desktop/毕业课题/manuscript-batch/CaseStudy2_CG/results/tables/")
+setwd("./CaseStudy2_CG/results/tables/")
 
 # ## 这19个IDs：基于log2水平80%PCs(前28个PCs)后Cook距离大于四倍平均值
 # ## 2023年4月初计算了先去除这19个样本后批次校正的数据。
