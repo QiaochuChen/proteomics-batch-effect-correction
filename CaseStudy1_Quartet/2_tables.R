@@ -36,8 +36,8 @@ data_list <- mclapply(all_files, function(x) data.table::fread(x))
 ## global ----------------------
 setwd("./CaseStudy1_Quartet/results/tables/")
 
-source("~/Desktop/毕业课题/utils/PCA.R")
-source("~/Desktop/毕业课题/utils/DEP.R")
+source("./utils/PCA.R")
+source("./utils/DEP.R")
 
 batches <- unique(meta$batch)
 names(batches) <- unique(apply(meta, 1, function(x) paste(x[10], x[9], sep = "_")))
