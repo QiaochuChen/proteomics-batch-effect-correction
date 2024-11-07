@@ -12,8 +12,7 @@ library(tibble)
 library(diann)
 
 rm(list = ls())
-setwd("/Users/qiaochu.chen/Desktop/毕业课题/manuscript-batch/CaseStudy2_CG/data/")
-# setwd("/public/home/PGx/chenqc/CaseStudy2_CG/data/")
+setwd("./CaseStudy2_CG/data/")
 
 PQM <- "MaxLFQ"
 PQM_Dir <- "lfq"
