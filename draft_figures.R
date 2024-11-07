@@ -29,10 +29,8 @@ library(UpSetR)
 rm(list = ls())
 
 ## global ----------------------
-source("~/Desktop/毕业课题/utils/PCA.R")
-source("~/Desktop/毕业课题/utils/DEP.R")
-
-setwd("~/Desktop/毕业课题/manuscript-batch/")
+source("./utils/PCA.R")
+source("./utils/DEP.R")
 
 meta1 <- read.csv("./CaseStudy1_Quartet/data/expfiles/meta.csv")
 meta2 <- read.csv("./CaseStudy2_CG/data/metadata.csv")
