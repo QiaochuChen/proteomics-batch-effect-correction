@@ -18,7 +18,7 @@ rm(list = ls())
 
 
 ## input ---------------------
-setwd("~/Desktop/毕业课题/manuscript-batch/CaseStudy1_Quartet/")
+setwd("./CaseStudy1_Quartet/")
 meta <- read.csv("data/expfiles/meta.csv")
 
 ## protein level
@@ -34,7 +34,7 @@ all_files <- paste("data/expfiles/protein",
 data_list <- mclapply(all_files, function(x) data.table::fread(x))
 
 ## global ----------------------
-setwd("~/Desktop/毕业课题/manuscript-batch/CaseStudy1_Quartet/results/tables/")
+setwd("./CaseStudy1_Quartet/results/tables/")
 
 source("~/Desktop/毕业课题/utils/PCA.R")
 source("~/Desktop/毕业课题/utils/DEP.R")
