@@ -15,7 +15,7 @@ library(RUVIIIC)
 
 
 rm(list = ls())
-
+setwd("./CaseStudy1_Quartet/data/")
 
 ## metadata ----------------------------------
 rm_order1 <- rep(c("FDU_Quartet_Peptide_D5_20171106", "FDU_Quartet_Peptide_D6_20171106", "FDU_Quartet_Peptide_F7_20171106", "FDU_Quartet_Peptide_M8_20171106"), 3)
