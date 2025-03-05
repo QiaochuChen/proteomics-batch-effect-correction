@@ -1,5 +1,5 @@
 ## Created on Mar 14th, 2024
-## Updated on Jul 28th, 2024
+## Updated on Jan 27th, 2025
 ## Author: Qiaochu Chen
 ## Title: To combine all figures
 
@@ -29,8 +29,10 @@ library(UpSetR)
 rm(list = ls())
 
 ## global ----------------------
-source("./utils/PCA.R")
-source("./utils/DEP.R")
+source("~/Desktop/utils/PCA.R")
+source("~/Desktop/utils/DEP.R")
+
+setwd("~/Desktop/PGx/Project_BEC_Proteomics/")
 
 meta1 <- read.csv("./CaseStudy1_Quartet/data/expfiles/meta.csv")
 meta2 <- read.csv("./CaseStudy2_CG/data/metadata.csv")
@@ -67,7 +69,7 @@ names(dictShapesBatch1) <- unique(meta1$batch)
 dictColorsBatch2 <- c("#FB9A99", "#FDBF6F", "#1F78B4")
 names(dictColorsBatch2) <- c("I", "II", "III")
 
-dictColorsLevel <- c("#E41A1C", "#984EA3", "#377EB8")
+dictColorsLevel <- c("#A50F15", "#984EA3", "#377EB8")
 names(dictColorsLevel) <- unique(data_levels)
 
 dictColorsMethod <- c("#FFFF99", "#7FC97F", "#BEAED4", "#386CB0", "#FDC086")
@@ -113,30 +115,8 @@ x_breaks <- c(503, 969)
 rm_ids <- c("ExpF25", "ExpB19", "ExpP72")
 
 
-## Peptide-level: Quartet ---------------------
-## intensity
-expr_dt <- fread("./CaseStudy1_Quartet/data/expfiles/peptide/expdata_log.csv")
-
-sub_intensity <- expr_dt %>%
-  reshape2::melt(., id = 1, na.rm = TRUE, variable.name = "library") %>%
-  left_join(., meta1, by = "library")
-
-p_intensity1 <- ggplot(sub_intensity, aes(x = batch, y = value)) +
-  geom_boxplot(aes(fill = sample), outlier.size = .5) +
-  theme_classic() +
-  theme(legend.position = "none",
-        axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 20, margin = unit(c(0, .3, 0, 0), "cm")),
-        axis.text.x = element_text(size = 20, angle = 45, hjust = 1, vjust = 1),
-        axis.text.y = element_text(size = 16),
-        strip.text = element_text(size = 20)) +
-  labs(y = "Peptide intensity") +
-  scale_fill_manual(values = dictColorsSample1) +
-  facet_grid(cols = vars(sample)) +
-  scale_x_discrete(labels = dictLabelsBatch) +
-  scale_y_continuous(n.breaks = 10)
-
-## count
+## Basic information (Count): Quartet ---------------------
+## peptide-level
 count_dt <- fread("./CaseStudy1_Quartet/results/tables/1_count_peptide_level.csv")
 
 mean(count_dt$count)
@@ -150,15 +130,19 @@ p_count_pep1 <- ggplot(count_dt, aes(x = sample, y = count)) +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         axis.title.y = element_text(size = 20, margin = unit(c(0, .3, 0, 0), "cm")),
-        axis.text.x = element_text(size = 20),
+        axis.text.x = element_text(size = 16, angle = 45, hjust = 1, vjust = 1),
         axis.text.y = element_text(size = 16),
+        axis.ticks.x = element_blank(),
+        panel.grid = element_blank(),
+        strip.background = element_rect(fill = "white", colour = "black"),
         strip.text = element_text(size = 20)) +
   labs(y = "Number of peptides") +
   scale_fill_manual(values = dictColorsSample1) +
-  # facet_grid(cols = vars(sample)) +
+  facet_grid(cols = vars(batch), labeller = as_labeller(dictLabelsBatch)) +
   # scale_x_discrete(labels = dictLabelsBatch) +
-  scale_y_continuous(n.breaks = 10)
+  scale_y_continuous(n.breaks = 10);p_count_pep1
 
+## Basic information (CV): Quartet ---------------------
 ## CV
 cv_dt <- fread("./CaseStudy1_Quartet/results/tables/1_cv_peptide_level.csv")
 
@@ -191,7 +175,158 @@ p_cv_pep1 <- ggplot(sub_cv, aes(x = sample, y = value)) +
   scale_fill_manual(values = dictColorsSample1) +
   scale_y_continuous(n.breaks = 10)
 
-## PCA
+
+## Batch effect diagnosis (Intensity): Quartet ---------------------
+## peptide-level
+expr_dt <- fread("./CaseStudy1_Quartet/data/expfiles/peptide/expdata_log.csv")
+
+sub_intensity <- expr_dt %>%
+  reshape2::melt(., id = 1, na.rm = TRUE, variable.name = "library") %>%
+  left_join(., meta1, by = "library")
+
+p_intensity_pep1 <- ggplot(sub_intensity, aes(x = sample, y = value)) +
+  geom_boxplot(aes(fill = sample), outlier.size = .5) +
+  theme_bw() +
+  theme(legend.position = "none",
+        title = element_text(size = 16),
+        text = element_text(size = 16),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20, margin = unit(c(0, .3, 0, 0), "cm")),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size = 16),
+        axis.ticks.x = element_blank(),
+        panel.grid = element_blank(),
+        strip.background = element_rect(fill = "white", colour = "black"),
+        strip.text = element_text(size = 20)) +
+  labs(title = "Peptide-level",
+       subtitle = "",
+       y = "Peptide intensity\n(Log transformed)") +
+  scale_fill_manual(values = dictColorsSample1) +
+  facet_grid(cols = vars(batch), labeller = as_labeller(dictLabelsBatch)) +
+  # scale_x_discrete(labels = dictLabelsBatch) +
+  scale_y_continuous(n.breaks = 10)
+
+## protein-level
+all_files <- list.files("./CaseStudy1_Quartet/data/expfiles/protein", recursive = TRUE, full.names = TRUE)
+all_expdata_log <- all_files[grepl("log_fot", all_files)]
+all_expdata_log <- all_expdata_log[grepl("balanced|confounded", all_expdata_log)]
+plot_titles <- rep(unique(dictLabelsScenario)[1:2], each = 3)
+plot_subtitles <- rep(c("iBAQ", "MaxLFQ", "TopPep3"), 3)
+
+p_intensity_list1 <- pblapply(1:6, function(i) {
+  
+  expr_tmp <- fread(all_expdata_log[i])
+  
+  sub_intensity <- expr_tmp %>%
+    reshape2::melt(., id = 1, na.rm = TRUE, variable.name = "library") %>%
+    left_join(., meta1, by = "library")
+  
+  p_intensity <- ggplot(sub_intensity, aes(x = sample, y = value)) +
+    geom_boxplot(aes(fill = sample), outlier.size = .5) +
+    theme_bw() +
+    theme(legend.position = "none",
+          title = element_text(size = 20),
+          text = element_text(size = 16),
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(size = 20, margin = unit(c(0, .3, 0, 0), "cm")),
+          axis.text.x = element_blank(),
+          axis.text.y = element_text(size = 16),
+          axis.ticks.x = element_blank(),
+          panel.grid = element_blank(),
+          strip.background = element_rect(fill = "white", colour = "black"),
+          strip.text = element_text(size = 20)) +
+    labs(title = plot_titles[i],
+         subtitle = plot_subtitles[i],
+         y = "Protein quantity\n(Log transformed)") +
+    scale_fill_manual(values = dictColorsSample1) +
+    facet_grid(cols = vars(batch), labeller = as_labeller(dictLabelsBatch)) +
+    # scale_x_discrete(labels = dictLabelsBatch) +
+    scale_y_continuous(n.breaks = 10)
+  
+  return(p_intensity)
+})
+
+
+## Batch effect diagnosis (Intensity): CGZ --------------
+## peptide-level
+expr_dt <- fread("./CaseStudy2_CG/data/expfiles/peptide/expdata_log.csv")
+
+sub_intensity <- expr_dt %>%
+  reshape2::melt(., na.rm = TRUE, id = 1, variable.name = "ID") %>%
+  group_by(ID) %>%
+  summarise(intensity = mean(value, na.rm = TRUE)) %>%
+  left_join(., meta2, by = "ID")
+
+p_intensity_pep21 <- ggplot(sub_intensity, aes(x = Order, y = intensity)) +
+  geom_point(aes(color = Cleaning), size = 2, alpha = .7) +
+  geom_smooth(aes(group = Cleaning), color = "darkgrey") +
+  geom_vline(xintercept = x_breaks, lty = 2, color = "black") +
+  scale_color_manual(values = dictColorsBatch2, name = "Batch") +
+  scale_x_continuous(breaks = c(seq(0, 1495, 200)[-c(4, 6)], x_breaks)) +
+  theme_classic() +
+  theme(title = element_text(size = 16),
+        text = element_text(size = 16),
+        axis.title = element_text(size = 20),
+        axis.text = element_text(size = 16),
+        legend.position = "none") +
+  labs(title = "Peptide-level",
+       subtitle = "",
+       y = "Peptide intensity\n(Log transformed)",
+       x = "Injection order")
+
+sub_intensity_qc <- sub_intensity %>%
+  filter(grepl("QC", Type))
+
+p_intensity_pep22 <- ggplot(sub_intensity_qc, aes(x = Order, y = intensity)) +
+  geom_point(aes(color = Type), size = 5) +
+  geom_smooth(aes(group = Cleaning), color = "darkgrey") +
+  geom_vline(xintercept = x_breaks, lty = 2, color = "black") +
+  scale_color_manual(values = dictColorsSample2, name = "Sample") +
+  scale_x_continuous(breaks = c(seq(0, 1495, 200)[-c(4, 6)], x_breaks)) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 20),
+        axis.text = element_text(size = 16),
+        legend.position = "none") +
+  labs(y = "Peptide intensity\n(Log transformed)", x = "Injection order")
+
+## protein-level
+all_files <- list.files("./CaseStudy2_CG/data/expfiles/protein", recursive = TRUE, full.names = TRUE)
+all_expdata_log <- all_files[grepl("log_fot", all_files)]
+plot_titles <- rep(unique(dictLabelsScenario)[3], each = 3)
+plot_subtitles <- c("iBAQ", "MaxLFQ", "TopPep3")
+
+p_intensity_list2 <- pblapply(1:3, function(i) {
+  
+  expr_tmp <- fread(all_expdata_log[i])
+  
+  sub_intensity <- expr_tmp %>%
+    reshape2::melt(., id = 1, na.rm = TRUE, variable.name = "ID") %>%
+    group_by(ID) %>%
+    summarise(intensity = mean(value, na.rm = TRUE)) %>%
+    left_join(., meta2, by = "ID")
+  
+  p_intensity <- ggplot(sub_intensity, aes(x = Order, y = intensity)) +
+    geom_point(aes(color = Cleaning), size = 5, alpha = .7) +
+    geom_smooth(aes(group = Cleaning), color = "darkgrey") +
+    geom_vline(xintercept = x_breaks, lty = 2, color = "black") +
+    scale_color_manual(values = dictColorsBatch2, name = "Batch") +
+    scale_x_continuous(breaks = c(seq(0, 1495, 200)[-c(4, 6)], x_breaks)) +
+    theme_classic() +
+    theme(axis.title = element_text(size = 20),
+          axis.text = element_text(size = 16),
+          title = element_text(size = 20),
+          legend.position = "none")  +
+    labs(title = plot_titles[i],
+         subtitle = plot_subtitles[i],
+         y = "Protein quantity\n(Log transformed)",
+         x = "Injection order")
+  
+  return(p_intensity)
+})
+
+
+## Batch effect diagnosis (Peptide-level PCA): Quartet ---------------------
+## peptide-level
 pca_obj <- readRDS("./CaseStudy1_Quartet/results/tables/1_pca_peptide_level.rds")
 pca_dt <- pca_obj$pcs_values
 snr_dt <- pca_obj$snr_results
@@ -199,60 +334,92 @@ prop1 <- pca_obj$pcs_props$PC1[2]
 prop2 <- pca_obj$pcs_props$PC2[2]
 
 p_pca_pep1 <- ggplot(pca_dt,aes(x = PC1, y = PC2)) +
-  geom_point(aes(color = sample, shape = batch), size = 6) +
-  geom_text(x = 38, y = 18, size = 7, aes(label = sprintf("SNR = %.2f", snr)), data = snr_dt) +
+  geom_point(aes(color = sample, shape = batch), size = 2) +
   theme_bw() +
-  theme(axis.title = element_text(size = 20),
+  theme(legend.position = "right",
+        title = element_text(size = 16),
+        text = element_text(size = 16),
+        axis.title = element_text(size = 16),
         axis.text = element_text(size = 16),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 20)) +
+        plot.margin = unit(c(1,.5, .5, .5), "cm")) +
   scale_shape_manual(values = dictShapesBatch1, labels = dictLabelsBatch) +
   scale_color_manual(values = dictColorsSample1) +
   scale_y_continuous(limits = c(-20, 20)) +
   scale_x_continuous(limits = c(-70, 70)) +
   labs(color = "Sample", shape = "Batch",
+       title = "Peptide-level", 
+       subtitle = sprintf("SNR = %.2f", snr_dt$snr),
        x = sprintf("PC1 (%.2f%%)", prop1 * 100),
-       y = sprintf("PC2 (%.2f%%)", prop2 * 100))
+       y = sprintf("PC2 (%.2f%%)", prop2 * 100));p_pca_pep1
 
 
-## Peptide-level: CGZ --------------
-## MS signal drift
-ms_dt <- fread("./CaseStudy2_CG/data/expfiles/peptide/expdata_log.csv")
+## Batch effect diagnosis (Protein-level PCA): Quartet --------------
+## protein-level
+all_pca_values <- fread("CaseStudy1_Quartet/results/tables/3_pca_qc.csv")
+all_pca_props <- fread("CaseStudy1_Quartet/results/tables/3_pca_qc_props.csv")
+all_pca_snr <- fread("CaseStudy1_Quartet/results/tables/3_pca_snr.csv")
 
-sub_ms <- ms_dt %>%
-  reshape2::melt(., na.rm = TRUE, id = 1, variable.name = "ID") %>%
-  group_by(ID) %>%
-  summarise(intensity = mean(value, na.rm = TRUE)) %>%
-  left_join(., meta2, by = "ID")
+sub_pca_values <- all_pca_values %>%
+  filter(all %in% "All") %>%
+  filter(correction %in% "Log transformed") %>%
+  filter(scenario %in% unique(scenarios)[1:2]) %>%
+  mutate_at("scenario", ~ dictLabelsScenario[.]) %>%
+  mutate(dataset_group = paste(scenario, quantitation, sep = "="))
 
-p_drift <- ggplot(sub_ms, aes(x = Order, y = intensity)) +
-  geom_point(aes(color = Cleaning), size = 5, alpha = .7) +
-  geom_smooth(aes(group = Cleaning), color = "darkgrey") +
-  geom_vline(xintercept = x_breaks, lty = 2, color = "black") +
-  scale_color_manual(values = dictColorsBatch2, name = "Batch") +
-  scale_x_continuous(breaks = c(seq(0, 1495, 200))) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 20),
-        axis.text = element_text(size = 16),
-        legend.position = "none") +
-  labs(y = "Peptide intensity", x = "Injection order")
+sub_pca_props <- all_pca_props %>%
+  filter(all %in% "All") %>%
+  filter(correction %in% "Log transformed") %>%
+  filter(scenario %in% unique(scenarios)[1:2]) %>%
+  mutate_at("scenario", ~ dictLabelsScenario[.]) %>%
+  mutate(dataset_group = paste(scenario, quantitation, sep = "="))
 
-sub_ms_qc <- sub_ms %>%
-  filter(grepl("QC", Type))
+sub_pca_snr <- all_pca_snr %>%
+  filter(all %in% "All") %>%
+  filter(correction %in% "Log transformed") %>%
+  filter(scenario %in% unique(scenarios)[1:2]) %>%
+  mutate_at("scenario", ~ dictLabelsScenario[.]) %>%
+  mutate(dataset_group = paste(scenario, quantitation, sep = "="))
 
-p_drift_qc <- ggplot(sub_ms_qc, aes(x = Order, y = intensity)) +
-  geom_point(aes(color = Type), size = 5) +
-  geom_smooth(aes(group = Cleaning), color = "darkgrey") +
-  geom_vline(xintercept = x_breaks, lty = 2, color = "black") +
-  scale_color_manual(values = dictColorsSample2, name = "sample") +
-  scale_x_continuous(breaks = c(seq(0, 1495, 200))) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 20),
-        axis.text = element_text(size = 16),
-        legend.position = "none") +
-  labs(y = "Peptide intensity", x = "Injection order")
+all_dataset_groups <- unique(sub_pca_values$dataset_group)
 
-## PCA
+p_pca_pro_list1 <- pblapply(all_dataset_groups, function(dataset_group_id) {
+  
+  sub_values_tmp <- sub_pca_values %>%
+    filter(dataset_group %in% dataset_group_id)
+  
+  sub_props_tmp <- sub_pca_props %>%
+    filter(dataset_group %in% dataset_group_id)
+  
+  sub_snr_tmp <- sub_pca_snr %>%
+    filter(dataset_group %in% dataset_group_id)
+  
+  p_pca_tmp <- ggplot(sub_values_tmp,aes(x = PC1, y = PC2)) +
+    geom_point(aes(color = sample, shape = batch), size = 2) +
+    theme_bw() +
+    theme(legend.position = "none",
+          title = element_text(size = 16),
+          text = element_text(size = 16),
+          axis.title = element_text(size = 16),
+          axis.text = element_text(size = 16),
+          plot.margin = unit(c(1,.5, .5, .5), "cm")) +
+    scale_shape_manual(values = dictShapesBatch1) +
+    scale_color_manual(values = dictColorsSample1) +
+    labs(color = "Sample", shape = "Batch",
+         title = unlist(strsplit(dataset_group_id, split = "="))[2], 
+         subtitle = sprintf("SNR = %.2f", sub_snr_tmp$snr),
+         x = sprintf("PC1 (%.2f%%)", sub_props_tmp$`Proportion of Variance`[1] * 100),
+         y = sprintf("PC2 (%.2f%%)", sub_props_tmp$`Proportion of Variance`[2] * 100))
+  
+  p_pca_tmp
+  
+  return(p_pca_tmp)
+})
+
+names(p_pca_pro_list1) <- all_dataset_groups
+
+
+## Batch effect diagnosis (Peptide-level PCA): CGZ --------------
+## peptide-level PCA: all samples
 expr <- fread("./CaseStudy2_CG/data/expfiles/peptide/expdata_log.csv")
 colnames(expr)[1] <- "Feature"
 
@@ -279,20 +446,23 @@ sub_pca_pep <- pca_results$pcs_values
 sub_props_pep <- pca_results$pcs_props
 
 p_pca_pep21 <- ggplot(sub_pca_pep,aes(x = PC1, y = PC2)) +
-  geom_point(aes(color = sample), size = 5, alpha = .7) +
+  geom_point(aes(color = sample), size = 2, alpha = .7) +
   theme_bw() +
-  theme(axis.title = element_text(size = 20),
+  theme(legend.position = "right",
+        title = element_text(size = 16),
+        text = element_text(size = 16),
+        axis.title = element_text(size = 16),
         axis.text = element_text(size = 16),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 20)) +
-  scale_color_manual(values = dictColorsBatch2) +
+        plot.margin = unit(c(1,.5, .5, .5), "cm")) +
+  scale_color_manual(values = dictColorsBatch2, name = "Batch") +
   # scale_y_continuous(limits = c(-20, 20)) +
   # scale_x_continuous(limits = c(-70, 70)) +
-  labs(color = "Batch",
+  labs(title = "Peptide-level", 
+       subtitle = "",
        x = sprintf("PC1 (%.2f%%)", sub_props_pep$PC1[2] * 100),
        y = sprintf("PC2 (%.2f%%)", sub_props_pep$PC2[2] * 100))
 
-## PCA: QC samples
+## peptide-level PCA: QC samples
 exprdata_t <- expr %>%
   column_to_rownames("Feature") %>%
   select(all_of(meta2$ID[grepl("QC", meta2$Type)])) %>%
@@ -309,24 +479,147 @@ metadata <- meta2 %>%
 
 pca_results <- main_pca(exprdata_t = exprdata_t, metadata = metadata,
                         group = "Cleaning", center = TRUE, scale = TRUE,
-                        biplot = FALSE, plot = FALSE)
+                        biplot = FALSE, plot = FALSE, snr = TRUE)
 
 sub_pca_pep <- pca_results$pcs_values
 sub_props_pep <- pca_results$pcs_props
+sub_snr_pep <- pca_results$snr_results
 
 p_pca_pep22 <- ggplot(sub_pca_pep,aes(x = PC1, y = PC2)) +
   geom_point(aes(color = Type, shape = sample), size = 5) +
   theme_bw() +
-  theme(axis.title = element_text(size = 20),
+  theme(legend.position = "right",
+        title = element_text(size = 16),
+        text = element_text(size = 16),
+        axis.title = element_text(size = 16),
         axis.text = element_text(size = 16),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 20)) +
+        plot.margin = unit(c(1,.5, .5, .5), "cm")) +
   scale_shape_manual(values = 15:17, name = "Batch") +
   scale_color_manual(values = dictColorsSample2, name = "Sample") +
   # scale_y_continuous(limits = c(-20, 20)) +
   # scale_x_continuous(limits = c(-70, 70)) +
-  labs(x = sprintf("PC1 (%.2f%%)", sub_props_pep$PC1[2] * 100),
+  labs(title = "Peptide-level", 
+       subtitle = sprintf("SNR = %.2f", sub_snr_pep$snr),
+       x = sprintf("PC1 (%.2f%%)", sub_props_pep$PC1[2] * 100),
        y = sprintf("PC2 (%.2f%%)", sub_props_pep$PC2[2] * 100))
+
+
+## Batch effect diagnosis (Protein-level PCA): CGZ QC samples --------------
+## protein-level
+all_pca_values <- fread("CaseStudy2_CG/results/tables/3_pca_qc.csv")
+all_pca_props <- fread("CaseStudy2_CG/results/tables/3_pca_qc_props.csv")
+all_pca_snr <- fread("CaseStudy2_CG/results/tables/3_pca_snr.csv")
+
+sub_pca_values <- all_pca_values %>%
+  filter(all %in% "All") %>%
+  filter(correction %in% "Log transformed") %>%
+  mutate(scenario = "Random design") %>%
+  mutate_at("scenario", ~ dictLabelsScenario[.]) %>%
+  mutate(dataset_group = paste(scenario, quantitation, sep = "="))
+
+sub_pca_props <- all_pca_props %>%
+  filter(all %in% "All") %>%
+  filter(correction %in% "Log transformed") %>%
+  mutate(scenario = "Random design") %>%
+  mutate_at("scenario", ~ dictLabelsScenario[.]) %>%
+  mutate(dataset_group = paste(scenario, quantitation, sep = "="))
+
+sub_pca_snr <- all_pca_snr %>%
+  filter(all %in% "All") %>%
+  filter(correction %in% "Log transformed") %>%
+  mutate(scenario = "Random design") %>%
+  mutate_at("scenario", ~ dictLabelsScenario[.]) %>%
+  mutate(dataset_group = paste(scenario, quantitation, sep = "="))
+
+all_dataset_groups <- unique(sub_pca_values$dataset_group)
+
+p_pca_pro_list2 <- pblapply(all_dataset_groups, function(dataset_group_id) {
+  
+  sub_values_tmp <- sub_pca_values %>%
+    filter(dataset_group %in% dataset_group_id)
+  
+  sub_props_tmp <- sub_pca_props %>%
+    filter(dataset_group %in% dataset_group_id)
+  
+  sub_snr_tmp <- sub_pca_snr %>%
+    filter(dataset_group %in% dataset_group_id)
+  
+  p_pca_tmp <- ggplot(sub_values_tmp,aes(x = PC1, y = PC2)) +
+    geom_point(aes(color = sample, shape = Cleaning), size = 5) +
+    theme_bw() +
+    theme(legend.position = "none",
+          title = element_text(size = 16),
+          text = element_text(size = 16),
+          axis.title = element_text(size = 16),
+          axis.text = element_text(size = 16),
+          plot.margin = unit(c(1,.5, .5, .5), "cm")) +
+    scale_shape_manual(values = 15:17) +
+    scale_color_manual(values = dictColorsSample2) +
+    labs(color = "Sample", shape = "Batch",
+         title = unlist(strsplit(dataset_group_id, split = "="))[2], 
+         subtitle = sprintf("SNR = %.2f", sub_snr_tmp$snr),
+         x = sprintf("PC1 (%.2f%%)", sub_props_tmp$`Proportion of Variance`[1] * 100),
+         y = sprintf("PC2 (%.2f%%)", sub_props_tmp$`Proportion of Variance`[2] * 100))
+  
+  p_pca_tmp
+  
+  return(p_pca_tmp)
+})
+
+names(p_pca_pro_list2) <- all_dataset_groups
+
+
+## Batch effect diagnosis (Protein-level PCA): CGZ all samples --------------
+## protein-level
+all_pca_values <- fread("CaseStudy2_CG/results/tables/2_pca.csv")
+all_pca_props <- fread("CaseStudy2_CG/results/tables/2_pca_props.csv")
+
+sub_pca_values <- all_pca_values %>%
+  filter(all %in% "All") %>%
+  filter(correction %in% "Log transformed") %>%
+  mutate(scenario = "Random design") %>%
+  mutate_at("scenario", ~ dictLabelsScenario[.]) %>%
+  mutate(dataset_group = paste(scenario, quantitation, sep = "="))
+
+sub_pca_props <- all_pca_props %>%
+  filter(all %in% "All") %>%
+  filter(correction %in% "Log transformed") %>%
+  mutate(scenario = "Random design") %>%
+  mutate_at("scenario", ~ dictLabelsScenario[.]) %>%
+  mutate(dataset_group = paste(scenario, quantitation, sep = "="))
+
+all_dataset_groups <- unique(sub_pca_values$dataset_group)
+
+p_pca_all_pro_list2 <- pblapply(all_dataset_groups, function(dataset_group_id) {
+  
+  sub_values_tmp <- sub_pca_values %>%
+    filter(dataset_group %in% dataset_group_id)
+  
+  sub_props_tmp <- sub_pca_props %>%
+    filter(dataset_group %in% dataset_group_id)
+  
+  p_pca_tmp <- ggplot(sub_values_tmp,aes(x = PC1, y = PC2)) +
+    geom_point(aes(color = sample), size = 2) +
+    theme_bw() +
+    theme(legend.position = "none",
+          title = element_text(size = 16),
+          text = element_text(size = 16),
+          axis.title = element_text(size = 16),
+          axis.text = element_text(size = 16),
+          plot.margin = unit(c(1,.5, .5, .5), "cm")) +
+    scale_color_manual(values = dictColorsBatch2) +
+    labs(color = "Sample", shape = "Batch",
+         title = unlist(strsplit(dataset_group_id, split = "="))[2], 
+         subtitle = "",
+         x = sprintf("PC1 (%.2f%%)", sub_props_tmp$`Proportion of Variance`[1] * 100),
+         y = sprintf("PC2 (%.2f%%)", sub_props_tmp$`Proportion of Variance`[2] * 100))
+  
+  p_pca_tmp
+  
+  return(p_pca_tmp)
+})
+
+names(p_pca_all_pro_list2) <- all_dataset_groups
 
 
 ## Count ------------------------
@@ -728,7 +1021,7 @@ p_pca_list1 <- pblapply(unique(scenarios)[1:2], function(scenario_id) {
     
     p_tmp <- ggplot(sub_tmp,aes(x = PC1, y = PC2)) +
       geom_point(aes(color = sample, shape = batch), size = 5) +
-      # geom_text(x = 0, y = 50, aes(label = sprintf("SNR = %.2f", snr)), data = sub_snr, size = 6) +
+      geom_text(x = 0, y = max(sub_pca_tmp$PC2) * 0.7, aes(label = sprintf("SNR = %.2f", snr)), data = sub_snr, size = 6) +
       theme_bw() +
       theme(legend.position = "none",
             title = element_text(size = 20),
@@ -987,7 +1280,7 @@ sub_pca_snr_anova <- sub_pca_snr11 %>%
 
 p_snr_box11 <- ggplot(sub_pca_snr11, aes(x = all, y = snr)) +
   geom_boxplot(aes(fill = level), width = .7, position = position_dodge(width = .8)) +
-  geom_text(y = 25, aes(x = all, label = sprintf("p = %.4f", p)), vjust = 0,
+  geom_text(y = 25, aes(x = all, label = ifelse(p < 0.0001, "p < 0.0001", sprintf("p = %.2f", p))), vjust = 0,
             data = sub_pca_snr_anova, size = 8) +
   theme_classic() +
   theme(legend.position = "right",
@@ -1213,7 +1506,7 @@ sub_brinfo_anova <- sub_brinfo_11 %>%
 
 p_brinfo_box11 <- ggplot(sub_brinfo_11, aes(x = all, y = brinfo)) +
   geom_boxplot(aes(fill = level), width = .7, position = position_dodge(width = .8)) +
-  geom_text(y = .2, aes(x = all, label = sprintf("p = %.4f", p)), vjust = 0,
+  geom_text(y = .2, aes(x = all, label = ifelse(p < 0.0001, "p < 0.0001", sprintf("p = %.2f", p))), vjust = 0,
             data = sub_brinfo_anova, size = 8) +
   theme_classic() +
   theme(legend.position = "right",
@@ -1752,8 +2045,9 @@ sub_f1_anova <- sub_pr11 %>%
 
 p_f1_box11 <- ggplot(sub_pr11, aes(x = all, y = f1)) +
   geom_boxplot(aes(fill = level), width = .7, position = position_dodge(width = .8)) +
-  geom_text(y = 1.05, aes(x = all, label = sprintf("p = %.4f", p)), vjust = 0,
+  geom_text(y = 1.05, aes(x = all, label = ifelse(p < 0.0001, "p < 0.0001", sprintf("p = %.2f", p))), vjust = 0,
             data = sub_f1_anova, size = 8) +
+  # ggpubr::stat_anova_test(aes(group = level), size = 5) +
   theme_classic() +
   theme(legend.position = "right",
         legend.title = element_text(size = 20),
@@ -1916,8 +2210,9 @@ sub_rc_anova <- sub_rc11 %>%
 
 p_rc_box11 <- ggplot(sub_rc11, aes(x = all, y = rc)) +
   geom_boxplot(aes(fill = level), width = .7, position = position_dodge(width = .8)) +
-  geom_text(y = 1.05, aes(x = all, label = sprintf("p = %.4f", p)), vjust = 0,
+  geom_text(y = 1.05, aes(x = all, label = ifelse(p < 0.0001, "p < 0.0001", sprintf("p = %.2f", p))), vjust = 0,
             data = sub_rc_anova, size = 8) +
+  # ggpubr::stat_anova_test(aes(group = level), size = 5) +
   theme_classic() +
   theme(legend.position = "right",
         legend.title = element_text(size = 20),
@@ -2710,7 +3005,6 @@ fwrite(sum_all_final, "./extended_data_table.csv")
 sum_all_by_beca <- sum_all_scaled %>%
   filter(!level %in% "Uncorrected") %>%
   rename_if(is.numeric, ~ gsub(" (scaled)", "", ., fixed = TRUE)) %>%
-  select(where(is.character), `Total score`) %>%
   reshape2::dcast(., scenario + level ~ correction + quantitation, value.var = "Total score")
 
 dictColumnsName <- c("CB_I", "CB_M", "CB_T",
@@ -2735,13 +3029,35 @@ p_radar_list <- pblapply(unique(scenarios), function(scenario_id) {
                      # plot.legend = ifelse(label_id %in% "Confounded design_MaxLFQ", TRUE, FALSE),
                      plot.legend = FALSE,
                      legend.text.size = 8,
-                     group.colours = dictColorsLevel,
+                     group.colours = dictColorsLevel[2:3],
                      fill = TRUE,
                      fill.alpha = .3)
   
   return(p_radar)
 
 })
+
+sum_all_by_level <- sum_all_scaled %>%
+  filter(!level %in% "Uncorrected") %>%
+  rename_if(is.numeric, ~ gsub(" (scaled)", "", ., fixed = TRUE)) %>%
+  reshape2::dcast(., scenario + correction + quantitation ~ level, value.var = "Total score") %>%
+  mutate(delta = `Protein-corrected` - `Peptide-corrected`) %>%
+  mutate(class = ifelse(delta > 0 , "Yes", "No"))
+
+p_all_percent <- ggplot(sum_all_by_level) +
+  geom_bar(aes(y = class, fill = class), position = "stack") +
+  scale_x_continuous(labels = ~ sprintf("%.2f%%", ./36),
+                     n.breaks = 10, name = "Proportion") +
+  scale_fill_manual(values = c("Yes" = "#377EB8", "No" = "#984EA3"),
+                    name = "Better performances at protein level") +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        legend.position = "right",
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 20),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 20))
 
 ## Heatmap
 sum_all2 <- sum_all_scaled %>%
@@ -2952,28 +3268,47 @@ p_all_bar3 <- ggplot(sum_all_scaled, aes(x = quantitation, y = `Total score`)) +
 
 
 ## Figure 2 ----------------------
-figure2ab <- plot_grid(p_cv_pep1 + theme(plot.margin = unit(c(1, 0, .5, .5), "cm")),
-                       p_pca_pep1 + theme(plot.margin = unit(c(1, 3, 0, .1), "cm")),
-                       labels = c("A", "B"), label_size = 30,
+p_blank <- ggplot() + theme_void()
+
+figure2ab <- plot_grid(p_intensity_pep1 + theme(plot.margin = unit(c(1,.5, 1.7, .5), "cm")),
+                       p_pca_pep1 + theme(plot.margin = unit(c(1, 2.5, .5, .5), "cm")),
+                       labels = c("a", "b"), label_size = 30,
                        ncol = 2, rel_widths = c(1, .8))
 
-figure2cdef <- plot_grid(p_drift + theme(plot.margin = unit(c(.5, 0, 0, .5), "cm")),
-                         p_pca_pep21 + theme(plot.margin = unit(c(.5, 3.6, 0, .1), "cm")),
-                         p_drift_qc + theme(plot.margin = unit(c(.5, 0, 0, .5), "cm")),
-                         p_pca_pep22 + theme(plot.margin = unit(c(.5, 0, 0, 0), "cm")),
-                         ncol = 2, rel_widths = c(1, .8),
-                         labels = c("C", "D", "E", "F"), label_size = 30)
+figure2c <- plot_grid(plotlist = c(p_pca_pro_list1[1:3], list(p_blank)),
+                      labels = c("c"), label_size = 30,
+                      ncol = 4, rel_widths = c(1, 1, 1, .4))
 
-figure2 <- plot_grid(figure2ab, figure2cdef, nrow = 2, rel_heights = c(.55, 1))
+figure2de <- plot_grid(p_intensity_pep21 + theme(plot.margin = unit(c(1,.5, .3, .5), "cm")),
+                          p_pca_pep21 + theme(plot.margin = unit(c(1, 3, .5, .5), "cm")),
+                          labels = c("d", "e"), label_size = 30,
+                          ncol = 2, rel_widths = c(1, .8))
 
-ggsave("./figure2.pdf", figure2, height = 14, width = 16)
+figure2f <- plot_grid(plotlist = c(p_pca_all_pro_list2, list(p_blank)),
+                      labels = c("f"), label_size = 30,
+                      ncol = 4, rel_widths = c(1, 1, 1, .4))
+
+figure2 <- plot_grid(figure2ab, figure2c, figure2de, figure2f,
+                     nrow = 4)
+
+ggsave("./figure2.pdf", figure2, height = 18, width = 16)
+
+sp_figure1bc <- plot_grid(p_intensity_pep22 + theme(plot.margin = unit(c(1,.5, .3, .5), "cm")),
+                       p_pca_pep22 + theme(plot.margin = unit(c(1, .3, .5, .5), "cm")),
+                       labels = c("b", "c"), label_size = 30,
+                       ncol = 2, rel_widths = c(1, .8))
+
+sp_figure1d <- plot_grid(plotlist = c(p_pca_pro_list2, list(p_blank)),
+                         labels = c("d"), label_size = 30,
+                         ncol = 4, rel_widths = c(1, 1, 1, .4))
 
 sp_figure1 <- plot_grid(p_count_pep1 + theme(plot.margin = unit(c(1, .5, .8, .5), "cm")),
-                        p_intensity1 + theme(plot.margin = unit(c(1, 0, 0, 0), "cm")),
-                        labels = c("A", "B"), label_size = 30,
-                        ncol = 2, rel_widths = c(.4, 1))
+                        sp_figure1bc,
+                        sp_figure1d,
+                        labels = c("a", ""), label_size = 30,
+                        ncol = 1)
 
-ggsave("./extended_figure1.pdf", sp_figure1, height = 4, width = 16)
+ggsave("./extended_figure1.pdf", sp_figure1, height = 14, width = 16)
 
 
 ## Figure 3 -------------------------
@@ -2989,7 +3324,7 @@ figure3ab <- plot_grid(p_count_bar_levelgroups1 +
                                axis.ticks.x = element_blank()) +
                          scale_x_discrete(labels = c("Peptide-corrected" = "Peptide-\ncorrected",
                                                      "Protein-corrected" = "Protein-\ncorrected")),
-                       ncol = 2, labels = c("A", "B"), label_size = 24)
+                       ncol = 2, labels = c("a", "b"), label_size = 24)
 
 # p_ha_legend <- plot_grid(get_legend(lg_level + guides(fill = guide_legend(direction = "horizontal"))),
 #                          get_legend(lg_method + guides(fill = guide_legend(direction = "horizontal"))),
@@ -3003,14 +3338,14 @@ figure3cd <- plot_grid(p_f1_bar1 + theme(legend.position = "none",
                                          plot.margin = unit(c(.5, .5, .5, 1.5), "cm")) +
                          scale_x_discrete(labels = c("Peptide-corrected" = "Peptide-\ncorrected",
                                                      "Protein-corrected" = "Protein-\ncorrected")),
-                       ncol = 2, labels = c("C", "D"), label_size = 24)
+                       ncol = 2, labels = c("c", "d"), label_size = 24)
 
 figure3ef <- plot_grid(p_f1_box11 + theme(legend.position = "none",
                                          plot.margin = unit(c(.5, .5, .5, 1.5), "cm")),
                        p_rc_box11 + theme(legend.position = "none",
                                          plot.margin = unit(c(.5, .5, .5, 1.5), "cm")), 
                        nrow = 2, rel_heights = c(1, 1),
-                       labels = c("E", "F"), label_size = 24)
+                       labels = c("e", "f"), label_size = 24)
 
 figure3 <- plot_grid(figure3ab,
                      figure3cd,
@@ -3019,7 +3354,7 @@ figure3 <- plot_grid(figure3ab,
                      # p_ha_legend + theme(plot.margin = unit(c(0, 0, 1, 0), "cm")) ,
                      nrow = 3, rel_heights = c(1, 1, 2))
 
-ggsave("./figure3.pdf", figure3, height = 22, width = 24)
+ggsave("./figure3.pdf", figure3, height = 26, width = 24)
 
 sp_figure2 <- plot_grid(p_count_bar11 + theme(legend.position = "none",
                                               plot.margin = unit(c(.5, .5, 1.8, .5), "cm")),
@@ -3029,7 +3364,7 @@ sp_figure2 <- plot_grid(p_count_bar11 + theme(legend.position = "none",
                                               plot.margin = unit(c(.5, .5, 1.8, .5), "cm")),
                         p_count_bar22 + theme(legend.position = "none",
                                               plot.margin = unit(c(.5, .5, 0, .5), "cm")),
-                        ncol = 2, labels = c("A", "B", "C", "D"), label_size = 30)
+                        ncol = 2, labels = c("a", "b", "c", "d"), label_size = 30)
 
 ggsave("./extended_figure2.pdf", sp_figure2, height = 14, width = 24)
 
@@ -3038,7 +3373,7 @@ sp_figure3 <- plot_grid(p_cv_list[[1]],
                         p_cv_list[[3]],
                         get_legend(lg_level + guides(fill = guide_legend(direction = "horizontal"))),
                         nrow = 4, rel_heights = c(1, 1, 1, .1),
-                        labels = c("A", "B", "C"), label_size = 24)
+                        labels = c("a", "b", "c"), label_size = 24)
 
 ggsave("./extended_figure3.pdf", sp_figure3, height = 24, width = 16)
 
@@ -3051,29 +3386,29 @@ ggsave("./extended_figure8.pdf", sp_figure8, height = 13, width = 15)
 sp_figure9 <- p_dep_bar2
 ggsave("./extended_figure9.pdf", sp_figure9, height = 13, width = 15)
 
-sp_figure5 <- plot_grid(p_f1_list2[[1]] + theme(plot.margin = unit(c(.5, 1, .5, 1), "cm")),
-                        p_f1_list2[[2]] + theme(plot.margin = unit(c(.5, 1, .5, 1), "cm")),
-                        p_f1_list2[[3]] + theme(plot.margin = unit(c(.5, 1, .5, 1), "cm")),
+sp_figure5 <- plot_grid(p_f1_list[[1]] + theme(plot.margin = unit(c(.5, 1, .5, 1), "cm")),
+                        p_f1_list[[2]] + theme(plot.margin = unit(c(.5, 1, .5, 1), "cm")),
+                        p_f1_list[[3]] + theme(plot.margin = unit(c(.5, 1, .5, 1), "cm")),
                         get_legend(lg_level +
                                      guides(fill = guide_legend(direction = "horizontal")) +
                                      theme(legend.title = element_text(size = 30),
                                            legend.text = element_text(size = 24))),
                         nrow = 4, rel_heights = c(1, 1, 1, .1),
-                        labels = c("A", "B", "C", ""), label_size = 24)
+                        labels = c("a", "b", "c", ""), label_size = 24)
 
 ggsave("./extended_figure5.pdf", sp_figure5, height = 26, width = 23)
 
 sp_figure6 <- plot_grid(p_f1_bar2 + theme(plot.margin = unit(c(.5, 0, 0, .5), "cm")),
                         p_f1_bar3 + theme(plot.margin = unit(c(.5, 0, 0, .5), "cm")),
                         nrow = 2, rel_heights = c(1, .85),
-                        labels = c("A", "B"), label_size = 24)
+                        labels = c("a", "b"), label_size = 24)
 
 ggsave("./extended_figure6.pdf", sp_figure6, height = 10, width = 12)
 
 sp_figure10 <- plot_grid(p_rc_bar2 + theme(plot.margin = unit(c(.5, 0, 0, .5), "cm")),
                         p_rc_bar3 + theme(plot.margin = unit(c(.5, 0, 0, .5), "cm")),
                         nrow = 2, rel_heights = c(1, .85),
-                        labels = c("A", "B"), label_size = 24)
+                        labels = c("a", "b"), label_size = 24)
 
 ggsave("./extended_figure10.pdf", sp_figure10, height = 10, width = 12)
 
@@ -3090,7 +3425,7 @@ p_legend <- plot_grid(get_legend(lg_pca_batch + theme(legend.direction = "horizo
 figure4a <- plot_grid(p_pca_list1[[1]] + theme(plot.margin = unit(c(.5, 0, .5, 1), "cm")),
                       p_legend,
                       nrow = 2, rel_heights = c(1, .1),
-                      labels = c("A", ""), label_size = 30)
+                      labels = c("a", ""), label_size = 30)
 
 figure4bc <- plot_grid(p_snr_bar1 +
                          scale_x_discrete(labels = c("Peptide-corrected" = "Peptide-\ncorrected",
@@ -3099,11 +3434,11 @@ figure4bc <- plot_grid(p_snr_bar1 +
                          scale_x_discrete(labels = c("Peptide-corrected" = "Peptide-\ncorrected",
                                                      "Protein-corrected" = "Protein-\ncorrected")),
                        ncol = 2, rel_widths = c(3, 1),
-                       labels = c("B", "C"), label_size = 30)
+                       labels = c("b", "c"), label_size = 30)
 
 figure4de <- plot_grid(p_snr_box11 + theme(legend.position = "none"),
                        p_brinfo_box11 + theme(legend.position = "none"),
-                       nrow = 2, labels = c("D", "E"), label_size = 30)
+                       nrow = 2, labels = c("d", "e"), label_size = 30)
 
 figure4 <- plot_grid(figure4a + theme(plot.margin = unit(c(.5, .5, 0, .5), "cm")),
                      figure4bc + theme(plot.margin = unit(c(.5, .5, 0, .5), "cm")),
@@ -3133,13 +3468,13 @@ sp_figure11 <- plot_grid(p_pca_list1[[2]] + theme(plot.margin = unit(c(.5, 0, .5
                         p_pca22_final + theme(plot.margin = unit(c(.5, 0, .5, 1), "cm")),
                         p_legend2,
                         nrow = 6, rel_heights = c(1, .1, 1, .1, 1, .1),
-                        labels = c("A", "", "B", "", "C", ""), label_size = 30)
+                        labels = c("a", "", "b", "", "c", ""), label_size = 30)
 
 ggsave("./extended_figure11.pdf", sp_figure11, height = 30, width = 24)
 
 sp_figure12cd <- plot_grid(p_brinfo_bar2 + theme(plot.margin = unit(c(.5, 0, 0, 1.2), "cm")),
                           p_brinfo_bar3 + theme(plot.margin = unit(c(.5, 0, 2, 1.2), "cm")),
-                          ncol = 2, labels = c("C", "D"), label_size = 24)
+                          ncol = 2, labels = c("c", "d"), label_size = 24)
 
 sp_figure12 <- plot_grid(p_snr_bar2 + theme(legend.position = "none",
                                             plot.margin = unit(c(.5, 0, 0, 1.2), "cm")),
@@ -3147,7 +3482,7 @@ sp_figure12 <- plot_grid(p_snr_bar2 + theme(legend.position = "none",
                                            plot.margin = unit(c(.5, 0, 0, 1.2), "cm")),
                         sp_figure12cd + theme(plot.margin = unit(c(0, 0, 0, 0), "cm")),
                         nrow = 3, rel_heights = c(1.2, 1, 1.2),
-                        labels = c("A", "B", ""), label_size = 24)
+                        labels = c("a", "b", ""), label_size = 24)
 
 ggsave("./extended_figure12.pdf", sp_figure12, height = 15, width = 12)
 
@@ -3163,7 +3498,7 @@ figure5 <- plot_grid(p_cross_sex + theme(plot.margin = unit(c(.5, 0, 0, 1), "cm"
                                                      legend.title = element_text(size = 30),
                                                      legend.text = element_text(size = 24))),
                      nrow = 5, rel_heights = c(1, 1, .8, .8, .1),
-                     labels = c("A", "B", "C", "D", ""), label_size = 30)
+                     labels = c("a", "b", "c", "d", ""), label_size = 30)
 
 ggsave("./figure5.pdf", figure5, height = 25, width = 20)
 
@@ -3172,7 +3507,7 @@ sp_figure13 <- plot_grid(p_mcc2 + theme(plot.margin = unit(c(.5, 0, 0, 0), "cm")
                          p_r2_age2 + theme(plot.margin = unit(c(.5, 0, 0, 0), "cm")),
                          p_r2_age3 + theme(plot.margin = unit(c(.5, 0, 2.5, .5), "cm")),
                          ncol = 2, rel_widths = c(1.5, 1),
-                         labels = c("A", "B", "C", "D"), label_size = 30)
+                         labels = c("a", "b", "c", "d"), label_size = 30)
 ggsave("./extended_figure13.pdf", sp_figure13, height = 16, width = 20)
 
 
@@ -3182,11 +3517,13 @@ p_bg <- ggplot(sub_auc) +  theme_void()
 figure6a <- plot_grid(p_bg, p_bg, p_radar_list[[1]], p_bg, p_radar_list[[2]], p_bg, p_radar_list[[3]], p_bg,
                       ncol = 8, rel_widths = c(.1, .1, 1, .1, 1, .1, 1, .5))
 
-figure6 <- plot_grid(p_bg, figure6a, p_bg, p_ha_all,
-                     nrow = 4, rel_heights = c(.1, 1, .1, 3.5),
-                     labels = c("A", "", "B", ""), label_size = 24)
+figure6 <- plot_grid(p_bg, figure6a,
+                     p_all_percent + theme(plot.margin = unit(c(.5, 0, .5, .5), "cm")),
+                     p_bg, p_ha_all,
+                     nrow = 5, rel_heights = c(.1, 1, 1, .1, 3.5),
+                     labels = c("a", "", "b", "c", ""), label_size = 24)
 
-ggsave("./figure6.pdf", figure6, height = 18, width = 15)
+ggsave("./figure6.pdf", figure6, height = 22, width = 15)
 
 sp_figure14 <- plot_grid(p_all_bar1 + theme(legend.position = "none",
                                             plot.margin = unit(c(.5, 0, 0, 1), "cm")),
@@ -3195,7 +3532,53 @@ sp_figure14 <- plot_grid(p_all_bar1 + theme(legend.position = "none",
                          p_all_bar3 + theme(legend.position = "none",
                                             plot.margin = unit(c(.5, 0, 0, 1), "cm")),
                          nrow = 3, rel_heights = c(1, 1, .85),
-                         labels = c("A", "B", "C"), label_size = 24)
+                         labels = c("a", "b", "c"), label_size = 24)
 
 ggsave("./extended_figure14.pdf", sp_figure14, height = 16, width = 12)
+
+
+## Abstract -----------
+all_results <- read_excel("./submitted_20241108/Extended_Data_Table_Evaluation_Summary.xlsx")
+
+sub_snr <- all_results %>%
+  mutate_at("correction", ~ ifelse(. %in% "Log transformed", "ComBat_Ratio_Median centering_RUV-III-C", .)) %>%
+  tidyr::separate_rows(., correction, sep = "_") %>%
+  reshape2::dcast(., scenario + correction + quantitation ~ level, value.var = "SNR") %>%
+  mutate(delta1 = `Protein-corrected` - `Peptide-corrected`,
+         delta2 = `Protein-corrected` - `Uncorrected`) %>%
+  mutate(pass = ifelse(delta1 > 0, "Yes", "No"))
+
+table(sub_snr$pass)
+
+sub_total <- all_results %>%
+  mutate_at("correction", ~ ifelse(. %in% "Log transformed", "ComBat_Ratio_Median centering_RUV-III-C", .)) %>%
+  tidyr::separate_rows(., correction, sep = "_") %>%
+  reshape2::dcast(., scenario + correction + quantitation ~ level, value.var = "Total score") %>%
+  mutate(delta1 = `Protein-corrected` - `Peptide-corrected`,
+         delta2 = `Protein-corrected` - `Uncorrected`) %>%
+  mutate(pass = ifelse(delta1 > 0, "Yes", "No"))
+
+table(sub_total$pass)
+
+df_mapping_final <- fread("./expfiles/peptide/pep2prot.csv")
+
+stat_mapping <- df_mapping_final %>%
+  filter(!protein_names %in% "") %>%
+  group_by(batch, protein_group_ids) %>%
+  summarise(n_peps = length(unique(peptide_id)))
+
+median(stat_mapping$n_peps)
+mean(stat_mapping$n_peps)
+quantile(stat_mapping$n_peps)
+
+df_mapping_final <- fread("../../CaseStudy2_CG/data/mapped.csv")
+
+stat_mapping <- df_mapping_final %>%
+  filter(!Accession %in% "") %>%
+  group_by(Accession) %>%
+  summarise(n_peps = length(unique(Peptide)))
+
+median(stat_mapping$n_peps)
+mean(stat_mapping$n_peps)
+quantile(stat_mapping$n_peps)
 
