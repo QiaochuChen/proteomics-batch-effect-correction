@@ -12,36 +12,46 @@ calculate_p <- function(exprdata, group, test_method, p_adjust, na_threshold, tr
 
   exprdf <- exprdata %>%
     as.data.frame %>%
-    filter(apply(., 1, function(x) length(which(as.numeric(x) == 0)) <= na_cut))
+    mutate_if(is.numeric, ~ ifelse(. == 0 | is.na(.) | is.nan(.) | is.infinite(.), NA, .)) %>%
+    filter(apply(., 1, function(x) sum(is.na(x)) <= na_cut))
   
   if (test_method == "limma") transform_to_log2 <- FALSE
   
   if (test_method == "deqms") transform_to_log2 <- TRUE
   
   if (transform_to_log2 == TRUE) {
-    exprdata <- exprdata %>%
-      mutate_if(is.numeric, ~ ifelse(. == 0, NA, log2(.)))
+    exprdf <- exprdf %>%
+      mutate_if(is.numeric, log2)
   }
+  
+  ## ensure that each group contains at least 2 valid values
+  match_group1 <- which(grepl(unique(group)[1], colnames(exprdf)))
+  match_group2 <- which(grepl(unique(group)[2], colnames(exprdf)))
+  
+  exprdf_valid <- exprdf %>%
+    mutate(n_group1 = apply(.[match_group1], 1, function(x) sum(!is.na(x)))) %>%
+    mutate(n_group2 = apply(.[match_group2], 1, function(x) sum(!is.na(x)))) %>%
+    filter(n_group1 >= 2, n_group2 >= 2) %>%
+    mutate(sd_group1 = apply(.[match_group1], 1, sd, na.rm = TRUE)) %>%
+    mutate(sd_group2 = apply(.[match_group2], 1, sd, na.rm = TRUE)) %>%
+    filter(sd_group1 != 0, sd_group2 != 0 ) %>%
+    select(c(match_group1, match_group2))
 
+  ## two-group tests
   if (test_method == "wilcox") {
     
     names(group) <- colnames(exprdf)
     
-    exprdf2long <- exprdf %>%
+    exprdf2long <- exprdf_valid %>%
       tibble::rownames_to_column("feature") %>%
-      reshape2::melt(., id = 1) %>%
+      reshape2::melt(., id = 1, na.rm = TRUE) %>%
       mutate(sample = group[variable])
     
-    all_features <- exprdf2long %>%
-      group_by(feature, sample) %>%
-      summarise(sd = sd(value, na.rm = TRUE)) %>%
-      filter(sd != 0) %>%
-      pull(feature) %>%
-      unique
+    all_features <- rownames(exprdf_valid)
     
     p_tables <- mclapply(all_features, function(feature_id) {
       
-      exprdf2long_i <- exprdf2long %>%
+      exprdf_valid_i <- exprdf2long %>%
         filter(feature %in% feature_id) %>%
         select(variable, sample, value)
       
@@ -62,17 +72,12 @@ calculate_p <- function(exprdata, group, test_method, p_adjust, na_threshold, tr
 
     names(group) <- colnames(exprdf)
     
-    exprdf2long <- exprdf %>%
+    exprdf2long <- exprdf_valid %>%
       tibble::rownames_to_column("feature") %>%
-      reshape2::melt(., id = 1) %>%
+      reshape2::melt(., id = 1, na.rm = TRUE) %>%
       mutate(sample = group[variable])
     
-    all_features <- exprdf2long %>%
-      group_by(feature, sample) %>%
-      summarise(sd = sd(value, na.rm = TRUE)) %>%
-      filter(sd != 0) %>%
-      pull(feature) %>%
-      unique
+    all_features <- rownames(exprdf_valid)
 
     p_tables <- mclapply(all_features, function(feature_id) {
 
@@ -93,9 +98,13 @@ calculate_p <- function(exprdata, group, test_method, p_adjust, na_threshold, tr
       select(feature, everything())
 
   } else if (test_method == "limma") {
+    
+    exprdf_0 <- exprdf_valid %>%
+      mutate_if(is.numeric, ~ ifelse(is.na(.), 0, .))
 
-    dge <- DGEList(counts = exprdf)
-    design <- model.matrix(~ group)
+    dge <- DGEList(counts = exprdf_0)
+    class <- factor(as.numeric(group))
+    design <- model.matrix(~ class)
 
     keep <- filterByExpr(dge, design)
     dge <- dge[keep, , keep.lib.sizes = FALSE]
@@ -103,12 +112,12 @@ calculate_p <- function(exprdata, group, test_method, p_adjust, na_threshold, tr
 
     v <- voom(dge, design, plot = F)
     fit <- lmFit(v, design)
-
+    
     fit <- eBayes(fit)
     p_results <- topTable(fit, coef = ncol(design),
                           sort.by = "logFC", number = Inf,
                           adjust.method = p_adjust)
-
+    
     final_results <- p_results %>%
       tibble::rownames_to_column("feature") %>%
       mutate(group1 = levels(group)[1]) %>%
@@ -116,15 +125,11 @@ calculate_p <- function(exprdata, group, test_method, p_adjust, na_threshold, tr
 
   } else if (test_method == "deqms") {
     
-    exprdf1 <- exprdf %>%
-      mutate_if(is.numeric, ~ . + 1)
-    
-    exprmt_log2 <- exprdf1 %>%
-      mutate_if(is.numeric, log2) %>%
+    exprmt_log2 <- exprdf_valid %>%
       as.matrix
     
-    exprdf_rowmins <- exprdf1 %>%
-      mutate(count = rowMins(as.matrix(.))) %>%
+    exprdf_rowmins <- exprdf_valid %>%
+      mutate(count = rowMins(as.matrix(2 ^ (.)) + 1, na.rm = TRUE)) %>%
       select(count)
     
     class <- factor(as.numeric(group))
