@@ -1,1 +1,82 @@
-
+Type,level,correction,quantitation,count,filter_count,total_count,Missed,Unqualified,Qualified
+QC sample (P10),Uncorrected,Log transformed,iBAQ,4993,205,10044,50.29,47.67,2.04
+QC sample (P11),Uncorrected,Log transformed,iBAQ,4859,221,10044,51.62,46.18,2.2
+QC sample (PM),Uncorrected,Log transformed,iBAQ,5809,168,10044,42.16,56.16,1.67
+QC sample (P10),Peptide-corrected,ComBat,iBAQ,4993,217,10044,50.29,47.55,2.16
+QC sample (P11),Peptide-corrected,ComBat,iBAQ,4859,230,10044,51.62,46.09,2.29
+QC sample (PM),Peptide-corrected,ComBat,iBAQ,5809,112,10044,42.16,56.72,1.12
+QC sample (P10),Peptide-corrected,Median centering,iBAQ,2611,257,10044,74,23.44,2.56
+QC sample (P11),Peptide-corrected,Median centering,iBAQ,2808,286,10044,72.04,25.11,2.85
+QC sample (PM),Peptide-corrected,Median centering,iBAQ,4339,109,10044,56.8,42.11,1.09
+QC sample (P10),Peptide-corrected,Ratio,iBAQ,621,196,10044,93.82,4.23,1.95
+QC sample (P11),Peptide-corrected,Ratio,iBAQ,617,220,10044,93.86,3.95,2.19
+QC sample (PM),Peptide-corrected,Ratio,iBAQ,626,92,10044,93.77,5.32,0.92
+QC sample (P10),Peptide-corrected,RUV-III-C,iBAQ,4822,161,10044,51.99,46.41,1.6
+QC sample (P11),Peptide-corrected,RUV-III-C,iBAQ,4699,151,10044,53.22,45.28,1.5
+QC sample (PM),Peptide-corrected,RUV-III-C,iBAQ,5622,72,10044,44.03,55.26,0.72
+QC sample (P10),Protein-corrected,ComBat,iBAQ,4993,235,10044,50.29,47.37,2.34
+QC sample (P11),Protein-corrected,ComBat,iBAQ,4859,247,10044,51.62,45.92,2.46
+QC sample (PM),Protein-corrected,ComBat,iBAQ,5809,199,10044,42.16,55.85,1.98
+QC sample (P10),Protein-corrected,Median centering,iBAQ,2951,235,10044,70.62,27.04,2.34
+QC sample (P11),Protein-corrected,Median centering,iBAQ,3051,264,10044,69.62,27.75,2.63
+QC sample (PM),Protein-corrected,Median centering,iBAQ,4418,197,10044,56.01,42.03,1.96
+QC sample (P10),Protein-corrected,Ratio,iBAQ,804,166,10044,92,6.35,1.65
+QC sample (P11),Protein-corrected,Ratio,iBAQ,802,170,10044,92.02,6.29,1.69
+QC sample (PM),Protein-corrected,Ratio,iBAQ,805,160,10044,91.99,6.42,1.59
+QC sample (P10),Protein-corrected,RUV-III-C,iBAQ,4730,164,10044,52.91,45.46,1.63
+QC sample (P11),Protein-corrected,RUV-III-C,iBAQ,4600,145,10044,54.2,44.35,1.44
+QC sample (PM),Protein-corrected,RUV-III-C,iBAQ,5531,74,10044,44.93,54.33,0.74
+QC sample (P10),Uncorrected,Log transformed,MaxLFQ,4771,344,10044,52.5,44.08,3.42
+QC sample (P11),Uncorrected,Log transformed,MaxLFQ,4642,351,10044,53.78,42.72,3.49
+QC sample (PM),Uncorrected,Log transformed,MaxLFQ,5502,272,10044,45.22,52.07,2.71
+QC sample (P10),Peptide-corrected,ComBat,MaxLFQ,4771,366,10044,52.5,43.86,3.64
+QC sample (P11),Peptide-corrected,ComBat,MaxLFQ,4642,350,10044,53.78,42.73,3.48
+QC sample (PM),Peptide-corrected,ComBat,MaxLFQ,5502,213,10044,45.22,52.66,2.12
+QC sample (P10),Peptide-corrected,Median centering,MaxLFQ,2420,379,10044,75.91,20.32,3.77
+QC sample (P11),Peptide-corrected,Median centering,MaxLFQ,2578,435,10044,74.33,21.34,4.33
+QC sample (PM),Peptide-corrected,Median centering,MaxLFQ,3802,215,10044,62.15,35.71,2.14
+QC sample (P10),Peptide-corrected,Ratio,MaxLFQ,295,151,10044,97.06,1.43,1.5
+QC sample (P11),Peptide-corrected,Ratio,MaxLFQ,294,141,10044,97.07,1.52,1.4
+QC sample (PM),Peptide-corrected,Ratio,MaxLFQ,295,112,10044,97.06,1.82,1.12
+QC sample (P10),Peptide-corrected,RUV-III-C,MaxLFQ,4305,476,10044,57.14,38.12,4.74
+QC sample (P11),Peptide-corrected,RUV-III-C,MaxLFQ,4186,510,10044,58.32,36.6,5.08
+QC sample (PM),Peptide-corrected,RUV-III-C,MaxLFQ,4897,281,10044,51.24,45.96,2.8
+QC sample (P10),Protein-corrected,ComBat,MaxLFQ,4771,353,10044,52.5,43.99,3.51
+QC sample (P11),Protein-corrected,ComBat,MaxLFQ,4642,342,10044,53.78,42.81,3.41
+QC sample (PM),Protein-corrected,ComBat,MaxLFQ,5502,291,10044,45.22,51.88,2.9
+QC sample (P10),Protein-corrected,Median centering,MaxLFQ,2879,426,10044,71.34,24.42,4.24
+QC sample (P11),Protein-corrected,Median centering,MaxLFQ,2973,438,10044,70.4,25.24,4.36
+QC sample (PM),Protein-corrected,Median centering,MaxLFQ,4259,346,10044,57.6,38.96,3.44
+QC sample (P10),Protein-corrected,Ratio,MaxLFQ,787,298,10044,92.16,4.87,2.97
+QC sample (P11),Protein-corrected,Ratio,MaxLFQ,787,285,10044,92.16,5,2.84
+QC sample (PM),Protein-corrected,Ratio,MaxLFQ,788,278,10044,92.15,5.08,2.77
+QC sample (P10),Protein-corrected,RUV-III-C,MaxLFQ,4507,269,10044,55.13,42.19,2.68
+QC sample (P11),Protein-corrected,RUV-III-C,MaxLFQ,4378,285,10044,56.41,40.75,2.84
+QC sample (PM),Protein-corrected,RUV-III-C,MaxLFQ,5234,152,10044,47.89,50.6,1.51
+QC sample (P10),Uncorrected,Log transformed,TopPep3,4182,209,10044,58.36,39.56,2.08
+QC sample (P11),Uncorrected,Log transformed,TopPep3,4054,201,10044,59.64,38.36,2
+QC sample (PM),Uncorrected,Log transformed,TopPep3,4871,166,10044,51.5,46.84,1.65
+QC sample (P10),Peptide-corrected,ComBat,TopPep3,4178,231,10044,58.4,39.3,2.3
+QC sample (P11),Peptide-corrected,ComBat,TopPep3,4060,243,10044,59.58,38,2.42
+QC sample (PM),Peptide-corrected,ComBat,TopPep3,4887,122,10044,51.34,47.44,1.21
+QC sample (P10),Peptide-corrected,Median centering,TopPep3,2161,302,10044,78.48,18.51,3.01
+QC sample (P11),Peptide-corrected,Median centering,TopPep3,2278,318,10044,77.32,19.51,3.17
+QC sample (PM),Peptide-corrected,Median centering,TopPep3,3222,129,10044,67.92,30.79,1.28
+QC sample (P10),Peptide-corrected,Ratio,TopPep3,210,77,10044,97.91,1.32,0.77
+QC sample (P11),Peptide-corrected,Ratio,TopPep3,210,68,10044,97.91,1.41,0.68
+QC sample (PM),Peptide-corrected,Ratio,TopPep3,210,44,10044,97.91,1.65,0.44
+QC sample (P10),Peptide-corrected,RUV-III-C,TopPep3,3432,164,10044,65.83,32.54,1.63
+QC sample (P11),Peptide-corrected,RUV-III-C,TopPep3,3318,169,10044,66.97,31.35,1.68
+QC sample (PM),Peptide-corrected,RUV-III-C,TopPep3,3927,67,10044,60.9,38.43,0.67
+QC sample (P10),Protein-corrected,ComBat,TopPep3,4182,228,10044,58.36,39.37,2.27
+QC sample (P11),Protein-corrected,ComBat,TopPep3,4054,205,10044,59.64,38.32,2.04
+QC sample (PM),Protein-corrected,ComBat,TopPep3,4871,179,10044,51.5,46.71,1.78
+QC sample (P10),Protein-corrected,Median centering,TopPep3,2509,260,10044,75.02,22.39,2.59
+QC sample (P11),Protein-corrected,Median centering,TopPep3,2600,258,10044,74.11,23.32,2.57
+QC sample (PM),Protein-corrected,Median centering,TopPep3,3743,203,10044,62.73,35.24,2.02
+QC sample (P10),Protein-corrected,Ratio,TopPep3,643,167,10044,93.6,4.74,1.66
+QC sample (P11),Protein-corrected,Ratio,TopPep3,643,157,10044,93.6,4.84,1.56
+QC sample (PM),Protein-corrected,Ratio,TopPep3,645,153,10044,93.58,4.9,1.52
+QC sample (P10),Protein-corrected,RUV-III-C,TopPep3,3994,211,10044,60.23,37.66,2.1
+QC sample (P11),Protein-corrected,RUV-III-C,TopPep3,3872,205,10044,61.45,36.51,2.04
+QC sample (PM),Protein-corrected,RUV-III-C,TopPep3,4688,119,10044,53.33,45.49,1.18
